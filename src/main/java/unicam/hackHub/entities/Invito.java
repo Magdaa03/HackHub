@@ -1,10 +1,9 @@
-package unicam.hackHub.team.model;
+package unicam.hackHub.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import java.util.Date;
-import unicam.hackHub.utente.model.Utente;
 
 @Entity
 public class Invito {
