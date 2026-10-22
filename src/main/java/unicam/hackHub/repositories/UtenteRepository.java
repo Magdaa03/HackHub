@@ -4,7 +4,7 @@ import java.util.Optional;
 import unicam.hackHub.entities.Utente;
 
 public interface UtenteRepository {
-    Utente saveUtente(Utente utente);
+    <S extends Utente> S save(S utente);
     Optional<Utente> findById(String id);
     Optional<Utente> findByEmail(String email);
 }

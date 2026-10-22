@@ -62,6 +62,10 @@ public class Team {
         return id;
     }
 
+    public List<Utente> getMembri() {
+        return List.copyOf(membri);
+    }
+
     public String setId(String id){
        return this.id=id;
     }

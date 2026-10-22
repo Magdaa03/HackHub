@@ -7,13 +7,7 @@ import unicam.hackHub.entities.Utente;
 import unicam.hackHub.repositories.UtenteRepository;
 
 @Repository
-public interface JpaUtenteRepository
-        extends JpaRepository<Utente, String>, UtenteRepository {
-
-    @Override
-    default Utente saveUtente(Utente utente) {
-        return save(utente);
-    }
+public interface JpaUtenteRepository extends JpaRepository<Utente, String>, UtenteRepository {
 
     @Override
     Optional<Utente> findByEmail(String email);

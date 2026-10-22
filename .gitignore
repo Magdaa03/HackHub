@@ -36,3 +36,6 @@ build/
 *.bak_*
 *.lck
 
+*.vpp.bak*
+*.vpp.vbak*
+

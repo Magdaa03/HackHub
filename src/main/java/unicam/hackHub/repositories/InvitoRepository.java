@@ -7,7 +7,7 @@ import unicam.hackHub.entities.StatoInvito;
 import unicam.hackHub.entities.Utente;
 
 public interface InvitoRepository {
-    Invito saveInvito(Invito invito);
+    <S extends Invito> S save(S invito);
     Optional<Invito> findById(String id);
     List<Invito> findByDestinatarioAndStato(Utente destinatario, StatoInvito stato);
 }

@@ -9,13 +9,7 @@ import unicam.hackHub.entities.Utente;
 import unicam.hackHub.repositories.InvitoRepository;
 
 @Repository
-public interface JpaInvitoRepository
-        extends JpaRepository<Invito, String>, InvitoRepository {
-
-    @Override
-    default Invito saveInvito(Invito invito) {
-        return save(invito);
-    }
+public interface JpaInvitoRepository extends JpaRepository<Invito, String>, InvitoRepository {
 
     @Override
     List<Invito> findByDestinatarioAndStato(Utente destinatario, StatoInvito stato);
