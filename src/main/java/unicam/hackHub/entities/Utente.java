@@ -2,6 +2,7 @@ package unicam.hackHub.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 
 @Entity
 public class Utente {
@@ -10,6 +11,7 @@ public class Utente {
     private String id;
 
     private String nome;
+    @Column(nullable = false, unique = true)
     private String email;
     private String password;
 
