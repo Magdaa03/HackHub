@@ -1,6 +1,8 @@
 package unicam.hackHub.controllers;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,12 +23,23 @@ public class TeamController {
         this.teamService = teamService;
     }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public TeamResponse creaTeam(
+            @RequestBody CreaTeamRequest request,
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
+        var team = teamService.creaTeam(request.nome(), utenteAutenticato.getUsername());
+        return new TeamResponse(team.getId(), team.getNome());
+    }
+
     @PostMapping("/{teamId}/inviti")
     @ResponseStatus(HttpStatus.CREATED)
     public InvitoResponse inviaInvito(
             @PathVariable String teamId,
-            @RequestBody InvitaUtenteRequest request) {
-        var invito = teamService.inviaInvito(teamId, request.emailDestinatario());
+            @RequestBody InvitaUtenteRequest request,
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
+        var invito = teamService.inviaInvito(
+                teamId, utenteAutenticato.getUsername(), request.emailDestinatario());
         return new InvitoResponse(
                 invito.getId(), invito.getStato().name(), invito.getMittente().getId());
     }
@@ -35,20 +48,24 @@ public class TeamController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void gestisciRispostaInvito(
             @PathVariable String invitoId,
-            @RequestBody RispostaInvitoRequest request) {
-        teamService.gestisciRispostaInvito(invitoId, request.accetta());
+            @RequestBody RispostaInvitoRequest request,
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
+        teamService.gestisciRispostaInvito(
+                invitoId, utenteAutenticato.getUsername(), request.accetta());
     }
 
-    @DeleteMapping("/{teamId}/membri/{utenteId}")
+    @DeleteMapping("/{teamId}/abbandona")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void abbandonaTeam(
             @PathVariable String teamId,
-            @PathVariable String utenteId) {
-        teamService.abbandonaTeam(teamId, utenteId);
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
+        teamService.abbandonaTeam(teamId, utenteAutenticato.getUsername());
     }
 
     public record InvitaUtenteRequest(String emailDestinatario) { }
     public record RispostaInvitoRequest(boolean accetta) { }
+    public record CreaTeamRequest(String nome) { }
 
+    public record TeamResponse(String id, String nome) { }
     public record InvitoResponse(String id, String stato, String teamId) { }
 }

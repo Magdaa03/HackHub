@@ -3,6 +3,7 @@ package unicam.hackHub.services;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -13,9 +14,11 @@ import unicam.hackHub.repositories.UtenteRepository;
 public class UtenteService {
 
     private final UtenteRepository utenteRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UtenteService(UtenteRepository utenteRepository) {
+    public UtenteService(UtenteRepository utenteRepository, PasswordEncoder passwordEncoder) {
         this.utenteRepository = utenteRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -36,7 +39,7 @@ public class UtenteService {
                 UUID.randomUUID().toString(),
                 nome.trim(),
                 emailNormalizzata,
-                password);
+                passwordEncoder.encode(password));
         return utenteRepository.save(utente);
     }
 
@@ -50,10 +53,16 @@ public class UtenteService {
         Utente utente = utenteRepository.findByEmail(emailNormalizzata)
                 .orElseThrow(this::credenzialiNonValide);
 
-        if (!password.equals(utente.getPassword())) {
+        if (!passwordEncoder.matches(password, utente.getPassword())) {
             throw credenzialiNonValide();
         }
         return utente;
+    }
+
+    @Transactional(readOnly = true)
+    public Utente trovaPerEmail(String email) {
+        return utenteRepository.findByEmail(email)
+                .orElseThrow(this::credenzialiNonValide);
     }
 
     private ResponseStatusException credenzialiNonValide() {
