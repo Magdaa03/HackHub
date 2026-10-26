@@ -1,9 +1,12 @@
 package unicam.hackHub.controllers;
 
+import java.util.Date;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +47,19 @@ public class TeamController {
                 invito.getId(), invito.getStato().name(), invito.getMittente().getId());
     }
 
+    @GetMapping("/inviti")
+    public List<InvitoRicevutoResponse> listaInvitiRicevuti(
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
+        return teamService.listaInvitiRicevuti(utenteAutenticato.getUsername()).stream()
+                .map(invito -> new InvitoRicevutoResponse(
+                        invito.getId(),
+                        invito.getMittente().getId(),
+                        invito.getMittente().getNome(),
+                        invito.getDataInvio(),
+                        invito.getStato().name()))
+                .toList();
+    }
+
     @PutMapping("/inviti/{invitoId}/risposta")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void gestisciRispostaInvito(
@@ -68,4 +84,6 @@ public class TeamController {
 
     public record TeamResponse(String id, String nome) { }
     public record InvitoResponse(String id, String stato, String teamId) { }
+    public record InvitoRicevutoResponse(
+            String id, String teamId, String nomeTeam, Date dataInvio, String stato) { }
 }

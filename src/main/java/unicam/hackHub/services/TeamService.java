@@ -1,5 +1,6 @@
 package unicam.hackHub.services;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +86,13 @@ public class TeamService {
         return invitoRepository.save(invito);
     }
 
+    @Transactional(readOnly = true)
+    public List<Invito> listaInvitiRicevuti(String emailUtente) {
+        Utente destinatario = utenteRepository.findByEmail(emailUtente)
+                .orElseThrow(() -> new IllegalArgumentException("Utente autenticato non trovato."));
+        return invitoRepository.findByDestinatarioAndStato(destinatario, StatoInvito.PENDENTE);
+    }
+
     @Transactional
     public void gestisciRispostaInvito(String invitoId, String emailDestinatario, boolean accetta) {
         Invito invito = invitoRepository.findById(invitoId)
@@ -107,7 +115,7 @@ public class TeamService {
             Team team = invito.getMittente();
             team.aggiungiMembro(destinatario);
             teamRepository.save(team);
-            invito.accetta();
+            destinatario.accettaInvito(invito);
         } else {
             invito.rifiuta();
         }
