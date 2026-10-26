@@ -1,4 +1,4 @@
-package unicam.hackHub.entities;
+package unicam.hackHub.entities.team;
 
 public enum StatoInvito {
     PENDENTE,

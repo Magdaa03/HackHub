@@ -1,4 +1,6 @@
-package unicam.hackHub.entities;
+package unicam.hackHub.entities.team;
+
+import unicam.hackHub.entities.utente.Utente;
 
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;

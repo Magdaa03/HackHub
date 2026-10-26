@@ -8,7 +8,7 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import unicam.hackHub.entities.Utente;
+import unicam.hackHub.entities.utente.Utente;
 
 @Service
 public class JwtTokenService {

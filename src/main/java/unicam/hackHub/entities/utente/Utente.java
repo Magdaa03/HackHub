@@ -1,4 +1,6 @@
-package unicam.hackHub.entities;
+package unicam.hackHub.entities.utente;
+
+import unicam.hackHub.entities.team.Invito;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

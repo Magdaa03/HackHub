@@ -1,7 +1,7 @@
 package unicam.hackHub.repositories;
 
 import java.util.Optional;
-import unicam.hackHub.entities.Team;
+import unicam.hackHub.entities.team.Team;
 
 public interface TeamRepository {
     <S extends Team> S save(S team);

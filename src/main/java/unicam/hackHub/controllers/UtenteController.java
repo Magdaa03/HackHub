@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import unicam.hackHub.entities.Utente;
+import unicam.hackHub.entities.utente.Utente;
 import unicam.hackHub.services.UtenteService;
 import unicam.hackHub.services.JwtTokenService;
 

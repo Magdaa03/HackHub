@@ -1,7 +1,7 @@
 package unicam.hackHub.repositories;
 
 import java.util.Optional;
-import unicam.hackHub.entities.Utente;
+import unicam.hackHub.entities.utente.Utente;
 
 public interface UtenteRepository {
     <S extends Utente> S save(S utente);
