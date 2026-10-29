@@ -9,6 +9,10 @@ import org.springframework.web.server.ResponseStatusException;
 import unicam.hackHub.entities.hackathon.Hackathon;
 import unicam.hackHub.factory.HackathonBuilder;
 import unicam.hackHub.repositories.HackathonRepository;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import unicam.hackHub.entities.hackathon.StatoHackathon;
+import unicam.hackHub.state.StatoInCorso;
 
 @Service
 public class HackathonService {
@@ -34,6 +38,33 @@ public class HackathonService {
                 .maxTeamSize(maxTeamSize)
                 .build();
 
+        return hackathonRepository.save(hackathon);
+    }
+
+    @Transactional
+    public Hackathon avviaHackathon(String idHackathon) {
+        Hackathon hackathon = hackathonRepository.findById(idHackathon)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Hackathon non trovato."));
+
+        if (hackathon.getStato().getTipo() != StatoHackathon.IN_ISCRIZIONE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "L'hackathon non è in stato di iscrizione.");
+        }
+
+        LocalDate oggi = LocalDate.now();
+        LocalDate inizio = hackathon.getDataInizio().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate fine = hackathon.getDataFine().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+
+        if (oggi.isBefore(inizio) || oggi.isAfter(fine)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "L'hackathon può essere avviato solo tra la data di inizio e quella di fine.");
+        }
+
+        hackathon.cambiaStato(new StatoInCorso());
         return hackathonRepository.save(hackathon);
     }
 

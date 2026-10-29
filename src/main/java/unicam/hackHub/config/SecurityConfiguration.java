@@ -29,6 +29,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/utenti/registrazione", "/api/utenti/accesso").permitAll()
+                        .requestMatchers("/api/gestore/**").hasRole("GESTORE")
                         .requestMatchers(HttpMethod.GET, "/api/hackathon", "/api/hackathon/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
@@ -43,7 +44,7 @@ public class SecurityConfiguration {
         return email -> utenteRepository.findByEmail(email)
                 .map(utente -> User.withUsername(utente.getEmail())
                         .password(utente.getPassword())
-                        .roles("USER")
+                        .roles(utente.getRuolo().name())
                         .build())
                 .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato."));
     }

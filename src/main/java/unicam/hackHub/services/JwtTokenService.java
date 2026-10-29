@@ -27,7 +27,7 @@ public class JwtTokenService {
         Instant adesso = Instant.now();
         return Jwts.builder()
                 .subject(utente.getEmail())
-                .claim("ruolo", "UTENTE")
+                .claim("ruolo", utente.getRuolo().name())
                 .issuedAt(Date.from(adesso))
                 .expiration(Date.from(adesso.plusSeconds(durataSecondi)))
                 .signWith(signingKey)

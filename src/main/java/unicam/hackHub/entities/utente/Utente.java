@@ -5,6 +5,8 @@ import unicam.hackHub.entities.team.Invito;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 public class Utente {
@@ -16,6 +18,9 @@ public class Utente {
     @Column(nullable = false, unique = true)
     private String email;
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    private RuoloAccount ruolo = RuoloAccount.UTENTE;
 
     //costruttore vuoto per caricare dati nel db
     public Utente() { }
@@ -65,5 +70,9 @@ public class Utente {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public RuoloAccount getRuolo() { return ruolo; }
+
+    public void setRuolo(RuoloAccount ruolo) { this.ruolo = ruolo; }
 }
 

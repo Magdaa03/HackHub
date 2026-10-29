@@ -2,6 +2,11 @@ package unicam.hackHub.controllers;
 
 import java.util.Date;
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,5 +61,37 @@ public class HackathonController {
                     hackathon.getMaxTeamSize(),
                     hackathon.getStato().getTipo().name());
         }
+
     }
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public HackathonResponse creaHackathon(@RequestBody CreaHackathonRequest request) {
+        var hackathon = hackathonService.creaHackathon(
+                request.nome(),
+                request.regolamento(),
+                request.scadenzaIscrizioni(),
+                request.dataInizio(),
+                request.dataFine(),
+                request.luogo(),
+                request.premio(),
+                request.maxTeamSize());
+
+        return HackathonResponse.from(hackathon);
+    }
+
+    @PutMapping("/{hackathonId}/avvio")
+    public HackathonResponse avviaHackathon(@PathVariable String hackathonId) {
+        return HackathonResponse.from(
+                hackathonService.avviaHackathon(hackathonId));
+    }
+
+    public record CreaHackathonRequest(
+            String nome,
+            String regolamento,
+            Date dataInizio,
+            Date dataFine,
+            Date scadenzaIscrizioni,
+            String luogo,
+            double premio,
+            int maxTeamSize) { }
 }
