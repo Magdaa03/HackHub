@@ -6,6 +6,14 @@ import unicam.hackHub.state.StatoInCorso;
 import unicam.hackHub.state.StatoInValutazione;
 import unicam.hackHub.state.StatoIscrizione;
 
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
+import unicam.hackHub.entities.staff.Mentore;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import unicam.hackHub.entities.staff.Giudice;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -38,6 +46,13 @@ public class Hackathon {
     private String luogo;
     private double premio;
     private int maxTeamSize;
+
+    @OneToMany(mappedBy = "hackathon")
+    private List<Mentore> mentori = new ArrayList<>();
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "giudice_id", nullable = false, unique = true)
+    private Giudice giudice;
 
     /* JPA salva l'enum; il comportamento dello State viene ricostruito quando si legge l'entità. */
     @Enumerated(EnumType.STRING)
@@ -100,6 +115,33 @@ public class Hackathon {
     public String getLuogo() { return luogo; }
     public double getPremio() { return premio; }
     public int getMaxTeamSize() { return maxTeamSize; }
+
+    public List<Mentore> getMentori() {
+        return List.copyOf(mentori);
+    }
+
+    public Giudice getGiudice() {
+        return giudice;
+    }
+
+    public void assegnaGiudice(Giudice giudice) {
+        this.giudice = Objects.requireNonNull(
+                giudice, "Il giudice è obbligatorio.");
+    }
+
+    public void aggiungiMentore(Mentore mentore) {
+        Objects.requireNonNull(mentore, "Il mentore è obbligatorio.");
+
+        if (mentore.getHackathon() != null && mentore.getHackathon() != this) {
+            throw new IllegalStateException(
+                    "Il mentore è già assegnato a un altro hackathon.");
+        }
+
+        if (!mentori.contains(mentore)) {
+            mentori.add(mentore);
+            mentore.assegnaAHackathon(this);
+        }
+    }
 
     private static String testoObbligatorio(String valore, String messaggio) {
         if (valore == null || valore.isBlank()) {

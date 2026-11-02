@@ -67,6 +67,8 @@ public class HackathonController {
     @ResponseStatus(HttpStatus.CREATED)
     public HackathonResponse creaHackathon(@RequestBody CreaHackathonRequest request) {
         var hackathon = hackathonService.creaHackathon(
+                request.giudiceId(),
+                request.mentoriIds(),
                 request.nome(),
                 request.regolamento(),
                 request.scadenzaIscrizioni(),
@@ -86,6 +88,8 @@ public class HackathonController {
     }
 
     public record CreaHackathonRequest(
+            String giudiceId,
+            List<String> mentoriIds,
             String nome,
             String regolamento,
             Date dataInizio,

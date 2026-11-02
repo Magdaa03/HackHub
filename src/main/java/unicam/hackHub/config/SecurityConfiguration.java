@@ -15,6 +15,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import unicam.hackHub.repositories.UtenteRepository;
 import unicam.hackHub.infrastructure.security.JwtAuthenticationFilter;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.core.Authentication;
+import unicam.hackHub.entities.staff.Organizzatore;
+import unicam.hackHub.repositories.ProfiloStaffRepository;
 
 @Configuration
 public class SecurityConfiguration {
@@ -22,7 +26,8 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            ProfiloStaffRepository profiloStaffRepository) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(basic -> basic.disable())
@@ -31,6 +36,14 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/utenti/registrazione", "/api/utenti/accesso").permitAll()
                         .requestMatchers("/api/gestore/**").hasRole("GESTORE")
+                        .requestMatchers(HttpMethod.POST, "/api/hackathon")
+                        .access((authentication, context) ->
+                                new AuthorizationDecision(
+                                        isOrganizzatore(authentication.get(), profiloStaffRepository)))
+                        .requestMatchers(HttpMethod.PUT, "/api/hackathon/*/avvio")
+                        .access((authentication, context) ->
+                                new AuthorizationDecision(
+                                        isOrganizzatore(authentication.get(), profiloStaffRepository)))
                         .requestMatchers(HttpMethod.GET, "/api/hackathon", "/api/hackathon/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
@@ -62,5 +75,17 @@ public class SecurityConfiguration {
                 new FilterRegistrationBean<>(jwtAuthenticationFilter);
         registration.setEnabled(false);
         return registration;
+    }
+    private static boolean isOrganizzatore(
+            Authentication autenticazione,
+            ProfiloStaffRepository profiloStaffRepository) {
+
+        return autenticazione != null
+                && autenticazione.isAuthenticated()
+                && profiloStaffRepository.findAll().stream()
+                .anyMatch(profilo ->
+                        profilo instanceof Organizzatore
+                                && profilo.getEmail()
+                                .equalsIgnoreCase(autenticazione.getName()));
     }
 }

@@ -13,20 +13,67 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import unicam.hackHub.entities.hackathon.StatoHackathon;
 import unicam.hackHub.state.StatoInCorso;
+import unicam.hackHub.entities.staff.ProfiloStaff;
+import unicam.hackHub.entities.staff.Giudice;
+import unicam.hackHub.entities.staff.Mentore;
+import unicam.hackHub.repositories.ProfiloStaffRepository;
+import java.util.ArrayList;
 
 @Service
 public class HackathonService {
 
     private final HackathonRepository hackathonRepository;
+    private final ProfiloStaffRepository profiloStaffRepository;
 
-    public HackathonService(HackathonRepository hackathonRepository) {
+    public HackathonService(
+            HackathonRepository hackathonRepository,
+            ProfiloStaffRepository profiloStaffRepository) {
         this.hackathonRepository = hackathonRepository;
+        this.profiloStaffRepository = profiloStaffRepository;
     }
 
     @Transactional
-    public Hackathon creaHackathon(String nome, String regolamento,
-            Date scadenzaIscrizioni, Date dataInizio, Date dataFine,
-            String luogo, double premio, int maxTeamSize) {
+    public Hackathon creaHackathon(
+            String giudiceId,
+            List<String> mentoriIds,
+            String nome,
+            String regolamento,
+            Date scadenzaIscrizioni,
+            Date dataInizio,
+            Date dataFine,
+            String luogo,
+            double premio,
+            int maxTeamSize) {
+
+        if (mentoriIds == null || mentoriIds.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "È necessario assegnare almeno un mentore.");
+        }
+
+        ProfiloStaff profiloGiudice = profiloStaffRepository.findById(giudiceId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Giudice non trovato."));
+
+        if (!(profiloGiudice instanceof Giudice giudice)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Il profilo selezionato non è un giudice.");
+        }
+
+        List<Mentore> mentori = new ArrayList<>();
+        for (String mentoreId : mentoriIds) {
+            ProfiloStaff profilo = profiloStaffRepository.findById(mentoreId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Mentore non trovato: " + mentoreId));
+
+            if (!(profilo instanceof Mentore mentore)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Il profilo selezionato non è un mentore: " + mentoreId);
+            }
+
+            mentori.add(mentore);
+        }
+
         Hackathon hackathon = new HackathonBuilder()
                 .nome(nome)
                 .regolamento(regolamento)
@@ -37,6 +84,12 @@ public class HackathonService {
                 .premio(premio)
                 .maxTeamSize(maxTeamSize)
                 .build();
+
+        hackathon.assegnaGiudice(giudice);
+
+        for (Mentore mentore : mentori) {
+            hackathon.aggiungiMentore(mentore);
+        }
 
         return hackathonRepository.save(hackathon);
     }
