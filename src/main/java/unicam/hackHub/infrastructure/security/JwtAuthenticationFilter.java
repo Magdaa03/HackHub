@@ -33,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
+
         return "/api/utenti/registrazione".equals(path)
                 || "/api/utenti/accesso".equals(path);
     }
@@ -42,6 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+
         String header = request.getHeader("Authorization");
 
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
@@ -50,15 +52,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            String email = jwtTokenService.leggiEmail(header.substring(7));
+            String token = header.substring(7);
+            String email = jwtTokenService.leggiEmail(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
             var authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request));
+
+            var context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
         } catch (JwtException | IllegalArgumentException | AuthenticationException exception) {
             SecurityContextHolder.clearContext();
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token non valido o scaduto.");
+            response.sendError(
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    "Token non valido o scaduto.");
             return;
         }
 
