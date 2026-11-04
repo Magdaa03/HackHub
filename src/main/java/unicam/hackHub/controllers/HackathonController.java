@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import unicam.hackHub.entities.hackathon.Hackathon;
 import unicam.hackHub.services.HackathonService;
 
@@ -65,8 +67,11 @@ public class HackathonController {
     }
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public HackathonResponse creaHackathon(@RequestBody CreaHackathonRequest request) {
+    public HackathonResponse creaHackathon(
+            @RequestBody CreaHackathonRequest request,
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
         var hackathon = hackathonService.creaHackathon(
+                utenteAutenticato.getUsername(),
                 request.giudiceId(),
                 request.mentoriIds(),
                 request.nome(),
@@ -82,9 +87,11 @@ public class HackathonController {
     }
 
     @PutMapping("/{hackathonId}/avvio")
-    public HackathonResponse avviaHackathon(@PathVariable String hackathonId) {
+    public HackathonResponse avviaHackathon(
+            @PathVariable String hackathonId,
+            @AuthenticationPrincipal UserDetails utenteAutenticato) {
         return HackathonResponse.from(
-                hackathonService.avviaHackathon(hackathonId));
+                hackathonService.avviaHackathon(hackathonId, utenteAutenticato.getUsername()));
     }
 
     public record CreaHackathonRequest(

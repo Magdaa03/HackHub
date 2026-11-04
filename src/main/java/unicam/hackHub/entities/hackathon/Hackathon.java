@@ -13,7 +13,9 @@ import unicam.hackHub.entities.staff.Mentore;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import unicam.hackHub.entities.staff.Giudice;
+import unicam.hackHub.entities.staff.Organizzatore;
 
+import jakarta.persistence.Version;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -47,12 +49,19 @@ public class Hackathon {
     private double premio;
     private int maxTeamSize;
 
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "hackathon")
     private List<Mentore> mentori = new ArrayList<>();
 
     @OneToOne(optional = false)
     @JoinColumn(name = "giudice_id", nullable = false, unique = true)
     private Giudice giudice;
+
+    @jakarta.persistence.ManyToOne(optional = false)
+    @JoinColumn(name = "organizzatore_id", nullable = false)
+    private Organizzatore organizzatore;
 
     /* JPA salva l'enum; il comportamento dello State viene ricostruito quando si legge l'entità. */
     @Enumerated(EnumType.STRING)
@@ -62,7 +71,7 @@ public class Hackathon {
     private IStatoHackathon stato;
 
     protected Hackathon() {
-        // Costruttore richiesto da JPA.
+
     }
 
     public Hackathon(String nome, String regolamento, Date scadenzaIscrizioni,
@@ -122,6 +131,15 @@ public class Hackathon {
 
     public Giudice getGiudice() {
         return giudice;
+    }
+
+    public Organizzatore getOrganizzatore() {
+        return organizzatore;
+    }
+
+    public void assegnaOrganizzatore(Organizzatore organizzatore) {
+        this.organizzatore = Objects.requireNonNull(
+                organizzatore, "L'organizzatore è obbligatorio.");
     }
 
     public void assegnaGiudice(Giudice giudice) {

@@ -1,5 +1,6 @@
 package unicam.hackHub.services;
 
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,13 +19,14 @@ import unicam.hackHub.repositories.ProfiloStaffRepository;
 import unicam.hackHub.repositories.RichiestaSupportoRepository;
 import unicam.hackHub.repositories.TeamRepository;
 import unicam.hackHub.repositories.UtenteRepository;
+import unicam.hackHub.state.StatoRichiestaSupporto;
 
 @Service
 public class RichiestaSupportoService {
 
     private final RichiestaSupportoRepository richiestaSupportoRepository;
     private final UtenteRepository utenteRepository;
-    private final ICalendario calendarService;
+    private final ICalendario calendario;
     private final TeamRepository teamRepository;
     private final HackathonRepository hackathonRepository;
     private final ProfiloStaffRepository profiloStaffRepository;
@@ -33,14 +35,14 @@ public class RichiestaSupportoService {
     public RichiestaSupportoService(
             RichiestaSupportoRepository richiestaSupportoRepository,
             UtenteRepository utenteRepository,
-            ICalendario calendarService,
+            ICalendario calendario,
             TeamRepository teamRepository,
             HackathonRepository hackathonRepository,
             ProfiloStaffRepository profiloStaffRepository,
             IscrizioneRepository iscrizioneRepository) {
         this.richiestaSupportoRepository = richiestaSupportoRepository;
         this.utenteRepository = utenteRepository;
-        this.calendarService = calendarService;
+        this.calendario = calendario;
         this.teamRepository = teamRepository;
         this.hackathonRepository = hackathonRepository;
         this.profiloStaffRepository = profiloStaffRepository;
@@ -92,17 +94,17 @@ public class RichiestaSupportoService {
                     HttpStatus.BAD_REQUEST, "Slot e descrizione sono obbligatori.");
         }
 
+        String idEvento = prenotaSlot(slot, team, hackathon, descrizione);
+
         try {
-            calendarService.prenotaCall(slot);
-        } catch (IllegalStateException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Lo slot selezionato è già occupato.");
+            RichiestaSupporto richiesta = new RichiestaSupporto(
+                    slot, descrizione, idEvento, team, hackathon, mentore);
+            return richiestaSupportoRepository.save(richiesta);
+        } catch (RuntimeException e) {
+            // Il rollback del database non cancella l'evento sul calendario esterno.
+            calendario.annullaCall(idEvento);
+            throw e;
         }
-
-        RichiestaSupporto richiesta =
-                new RichiestaSupporto(slot, descrizione, team, hackathon, mentore);
-
-        return richiestaSupportoRepository.save(richiesta);
     }
 
     @Transactional
@@ -115,13 +117,48 @@ public class RichiestaSupportoService {
 
         verificaMentoreAutenticato(richiesta.getMentore());
 
+        if (richiesta.getStato() != StatoRichiestaSupporto.PENDENTE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "La richiesta è già stata gestita.");
+        }
+
         if (accetta) {
             richiesta.accettaCall(richiesta.getSlot());
         } else {
+            try {
+                calendario.annullaCall(richiesta.getIdEventoCalendario());
+            } catch (IllegalStateException e) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_GATEWAY, e.getMessage());
+            }
             richiesta.rifiutaCall(richiesta.getSlot());
         }
 
         return richiestaSupportoRepository.save(richiesta);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RichiestaSupporto> richiesteRicevuteDalMentore() {
+        String email = emailAutenticato();
+        boolean mentore = profiloStaffRepository.findAll().stream()
+                .anyMatch(profilo -> profilo instanceof Mentore
+                        && profilo.getEmail().equalsIgnoreCase(email));
+        if (!mentore) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Solo un mentore può consultare le richieste ricevute.");
+        }
+        return richiestaSupportoRepository.findByMentore_Utente_EmailIgnoreCase(email);
+    }
+
+    private String prenotaSlot(String slot, Team team, Hackathon hackathon, String descrizione) {
+        String titolo = "Call di supporto - " + team.getNome() + " (" + hackathon.getNome() + ")";
+        try {
+            return calendario.prenotaCall(slot, titolo, descrizione);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
     }
 
     private void verificaMembroTeam(Team team) {

@@ -3,6 +3,9 @@ package unicam.hackHub.entities.team;
 import unicam.hackHub.entities.utente.Utente;
 
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +23,10 @@ public class Team {
 
     //Lista membri del Team
     @OneToMany
+    @JoinTable(name = "team_membri",
+            joinColumns = @JoinColumn(name = "team_id"),
+            inverseJoinColumns = @JoinColumn(name = "utente_id", unique = true),
+            uniqueConstraints = @UniqueConstraint(columnNames = "utente_id"))
     private List<Utente> membri = new ArrayList<>();
 
     //Lista inviti Spediti
@@ -36,7 +43,9 @@ public class Team {
     }
 
     public void aggiungiMembro(Utente utente) {
-        this.membri.add(utente);
+        if (!this.membri.contains(utente)) {
+            this.membri.add(utente);
+        }
     }
 
     public void rimuoviMembro(Utente utente) {

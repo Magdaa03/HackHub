@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 import unicam.hackHub.entities.hackathon.RichiestaSupporto;
 import unicam.hackHub.state.StatoRichiestaSupporto;
 import unicam.hackHub.services.RichiestaSupportoService;
@@ -53,6 +54,13 @@ public class RichiestaSupportoController {
                         richiestaId, request.accetta());
 
         return RichiestaSupportoResponse.from(richiesta);
+    }
+
+    @GetMapping("/richieste-supporto/ricevute")
+    public java.util.List<RichiestaSupportoResponse> richiesteRicevuteDalMentore() {
+        return richiestaSupportoService.richiesteRicevuteDalMentore().stream()
+                .map(RichiestaSupportoResponse::from)
+                .toList();
     }
 
     public record RichiestaSupportoRequest(

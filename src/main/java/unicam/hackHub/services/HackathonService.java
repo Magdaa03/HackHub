@@ -16,6 +16,7 @@ import unicam.hackHub.state.StatoInCorso;
 import unicam.hackHub.entities.staff.ProfiloStaff;
 import unicam.hackHub.entities.staff.Giudice;
 import unicam.hackHub.entities.staff.Mentore;
+import unicam.hackHub.entities.staff.Organizzatore;
 import unicam.hackHub.repositories.ProfiloStaffRepository;
 import java.util.ArrayList;
 
@@ -34,6 +35,7 @@ public class HackathonService {
 
     @Transactional
     public Hackathon creaHackathon(
+            String emailOrganizzatore,
             String giudiceId,
             List<String> mentoriIds,
             String nome,
@@ -49,6 +51,14 @@ public class HackathonService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "È necessario assegnare almeno un mentore.");
         }
+
+        Organizzatore organizzatore = profiloStaffRepository.findAll().stream()
+                .filter(Organizzatore.class::isInstance)
+                .map(Organizzatore.class::cast)
+                .filter(profilo -> profilo.getEmail().equalsIgnoreCase(emailOrganizzatore))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "Profilo organizzatore non trovato."));
 
         ProfiloStaff profiloGiudice = profiloStaffRepository.findById(giudiceId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -86,6 +96,7 @@ public class HackathonService {
                 .build();
 
         hackathon.assegnaGiudice(giudice);
+        hackathon.assegnaOrganizzatore(organizzatore);
 
         for (Mentore mentore : mentori) {
             hackathon.aggiungiMentore(mentore);
@@ -95,10 +106,17 @@ public class HackathonService {
     }
 
     @Transactional
-    public Hackathon avviaHackathon(String idHackathon) {
+    public Hackathon avviaHackathon(String idHackathon, String emailOrganizzatore) {
         Hackathon hackathon = hackathonRepository.findById(idHackathon)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Hackathon non trovato."));
+
+        if (hackathon.getOrganizzatore() == null
+                || !hackathon.getOrganizzatore().getEmail()
+                        .equalsIgnoreCase(emailOrganizzatore)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Solo l'organizzatore dell'hackathon può avviarlo.");
+        }
 
         if (hackathon.getStato().getTipo() != StatoHackathon.IN_ISCRIZIONE) {
             throw new ResponseStatusException(

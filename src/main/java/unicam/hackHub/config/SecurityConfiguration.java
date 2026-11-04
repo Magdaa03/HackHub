@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/utenti/registrazione", "/api/utenti/accesso").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/gestore/**").hasRole("GESTORE")
                         .requestMatchers(HttpMethod.POST, "/api/hackathon")
                         .access((authentication, context) ->
